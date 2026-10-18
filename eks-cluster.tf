@@ -1,39 +1,43 @@
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.1.3"
+  version = "21.29.0"
 
-  name = "myapp-eks-cluster"
-  kubernetes_version = "1.33"
-  endpoint_public_access  = true
+  # Core EKS v21 settings
+  name               = "myapp-eks-cluster"
+  kubernetes_version = "1.37"
 
-  subnet_ids = module.myapp-vpc.private_subnets
-  vpc_id = module.myapp-vpc.vpc_id
+  vpc_id                 = module.myapp-vpc.vpc_id
+  subnet_ids             = module.myapp-vpc.private_subnets
+  endpoint_public_access = true
 
-  enable_cluster_creator_admin_permissions = true  
+  # Enable cluster creator admin permissions
+  enable_cluster_creator_admin_permissions = true
 
+  # Disable Auto Mode compute to route to your manual node groups instead
+  compute_config = {
+    enabled = false
+  }
+
+  # RENAMED FOR v21: cluster_addons is now addons
   addons = {
     coredns                = {}
-    eks-pod-identity-agent = {
-      before_compute = true
-    }
+    eks-pod-identity-agent = { before_compute = true }
     kube-proxy             = {}
-    vpc-cni                = {
-      before_compute = true
-    }
-  }
-  
-  tags = {
-    environment = "development"
-    application = "myapp"
+    vpc-cni                = { before_compute = true }
   }
 
   eks_managed_node_groups = {
     dev = {
-    instance_types = ["t2.small"]
-    ami_type       = "AL2023_x86_64_STANDARD"
-    min_size       = 1
-    max_size       = 3
-    desired_size   = 3
+      instance_types = ["t2.small"]
+      ami_type       = "AL2023_x86_64_STANDARD"
+      min_size       = 1
+      max_size       = 3
+      desired_size   = 3
     }
+  }
+
+  tags = {
+    environment = "development"
+    application = "myapp"
   }
 }
